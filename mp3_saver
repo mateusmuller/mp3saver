@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+# -------------------------------VARIABLES----------------------------------------- #
+DEVICE="/dev/sda1"
+DESTINATION_DIR="/media/mateus/ExternalC3Red"
+DESTINATION_DIR_MUSICS="/Músicas/Backup"
+BACKUP_DIR="/home/mateus/Downloads"
+
+MOUNT_FILE="/proc/mounts"
+NULL_DEVICE="1> /dev/null 2>&1"
+LOG_FILE="/home/mateus/Scripts/shell/mp3saver/mp3saver.log"
+REDIRECT_LOG_FILE="1>> $LOG_FILE 2>&1"
+# -------------------------------TESTS----------------------------------------- #
+# Is root?
+[ "$UID" != "0" ] && {
+  echo "---------- You must be root ----------" >> $LOG_FILE
+  exit 1
+}
+
+# Is device mount?
+grep -q "$DEVICE" "$MOUNT_FILE"
+[ "$?" != "0" ] && {
+  echo "---------- Device not mounted. Mounting $DEVICE ----------" >> $LOG_FILE
+  eval mount "$DEVICE" "$DESTINATION_DIR" "$NULL_DEVICE"
+}
+
+# Is there write permissions?
+[ ! -w "$DESTINATION_DIR" ] && {
+  echo "---------- Do not have write permissions ----------" >> $LOG_FILE
+  exit 1
+}
+# -------------------------------FUNCTIONS----------------------------------------- #
+backup () {
+  find "$BACKUP_DIR" -name "*.mp3" \
+                     -exec cp -vru {} "$DESTINATION_DIR""$DESTINATION_DIR_MUSICS" \; 1>> $LOG_FILE 2>&1
+
+  [ "$?" = "0" ] && {
+    echo "---------- Back-up finished. Umounting $DEVICE ----------" >> $LOG_FILE
+    eval umount "$DEVICE" "$NULL_DEVICE"
+    exit 0
+  }
+}
+
+preparelogfile () {
+  echo "----------[ $(date) ]----------" >> $LOG_FILE
+}
+
+main () {
+  preparelogfile
+  backup
+}
+# -------------------------------EXECUTION----------------------------------------- #
+main
