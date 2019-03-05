@@ -13,7 +13,7 @@ You can either execute it manually or setup a crontab schedule like me.
 ## Crontab configuration
 You may want to create softlink to another folder inside $PATH.
 
-* *$ ln -s /home/mateus/Scripts/shell/mp3saver/mp3_saver /usr/local/bin
+* *$ ln -s /home/mateus/Scripts/shell/mp3saver/mp3_saver /usr/local/bin*
 
 Therefore, on /etc/crontab you can call only the script name.
 
