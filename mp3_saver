@@ -17,12 +17,15 @@ REDIRECT_LOG_FILE="1>> $LOG_FILE 2>&1"
   exit 1
 }
 
-# Is device mount?
+# Is device mounted?
 grep -q "$DEVICE" "$MOUNT_FILE"
-[ "$?" != "0" ] && {
+if [ "$?" != "0" ]; then
   echo "---------- Device not mounted. Mounting $DEVICE ----------" >> $LOG_FILE
   eval mount "$DEVICE" "$DESTINATION_DIR" "$NULL_DEVICE"
-}
+else
+  # If yes, grep the mount point
+  DESTINATION_DIR=$(grep "$DEVICE" "$MOUNT_FILE" | cut -d " " -f 2)
+fi
 
 # Is there write permissions?
 [ ! -w "$DESTINATION_DIR" ] && {
