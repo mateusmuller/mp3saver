@@ -11,9 +11,13 @@ You can either execute it manually or setup a crontab schedule like me.
 * *$ sudo mp3saver*
 
 ## Crontab configuration
-This is my schedule:
+You may want to create softlink to another folder inside $PATH.
 
-* *30 21   * * *   root    /home/mateus/Scripts/shell/mp3saver*
+* *$ ln -s /home/mateus/Scripts/shell/mp3saver/mp3_saver /usr/local/bin*
+
+Therefore, on /etc/crontab you can call only the script name.
+
+* *30 21   * * *   root    mp3_saver 1> /dev/null 2>&1*
 
 Every day, on 21:30 it will execute it.
 
