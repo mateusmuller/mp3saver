@@ -1,15 +1,52 @@
 #!/usr/bin/env bash
+#
+# mp3_saver.sh - Incremental back-up for .mp3 files from Downloads directory to an External Device
+#
+# Website:       https://4fasters.com.br
+# Author:        Mateus Gabriel Müller
+# Maintenance:   Mateus Gabriel Müller
+#
+# ------------------------------------------------------------------------ #
+# WHAT IT DOES?
+# This script can be called by the normal way using "./" or scheduled to execute through Cron.
+# You have to change the variables to point to your External Device.
+#
+# CONFIGURATION?
+# I recommend you to create a softlink to folder that is available on $PATH variable.
+# $ ln -s /home/mateus/Scripts/shell/mp3saver/mp3_saver /usr/local/bin
+#
+# HOW TO USE IT?
+# Examples:
+# $ ./mp3_saver
+#
+# or
+#
+# 30 21 * * * root mp3_saver 1> /dev/null 2>&1
+# ------------------------------------------------------------------------ #
+# Changelog:
+#
+#   v1.0 07/03/2019, Mateus Müller:
+#     - First version with comments!
+#
+# ------------------------------------------------------------------------ #
+# Tested on:
+#   bash 5.0.2
+# ------------------------------------------------------------------------ #
 
 # -------------------------------VARIABLES----------------------------------------- #
-DEVICE="/dev/sda1"
-DESTINATION_DIR="/media/mateus/ExternalC3Red"
-DESTINATION_DIR_MUSICS="/Músicas/Backup"
-BACKUP_DIR="/home/mateus/Downloads"
+# You may change
+DEVICE="/dev/sda1" # External Device (check with "fdisk -l")
+DESTINATION_DIR="/media/mateus/ExternalC3Red" # Mountpoint to your External Device
+DESTINATION_DIR_MUSICS="/Músicas/Backup" # The folder inside your External Device - In my case it would be /media/mateus/ExternalC3Red/Músicas/Backup
+BACKUP_DIR="/home/mateus/Downloads" # The directory where the .mp3 are stored
+LOG_FILE="/home/mateus/Scripts/shell/mp3saver/mp3saver.log" # The location from the log file
 
+# NOT CHANGE
 MOUNT_FILE="/proc/mounts"
 NULL_DEVICE="1> /dev/null 2>&1"
-LOG_FILE="/home/mateus/Scripts/shell/mp3saver/mp3saver.log"
 REDIRECT_LOG_FILE="1>> $LOG_FILE 2>&1"
+# ------------------------------------------------------------------------ #
+
 # -------------------------------TESTS----------------------------------------- #
 # Is root?
 [ "$UID" != "0" ] && {
@@ -20,10 +57,11 @@ REDIRECT_LOG_FILE="1>> $LOG_FILE 2>&1"
 # Is device mounted?
 grep -q "$DEVICE" "$MOUNT_FILE"
 if [ "$?" != "0" ]; then
+  # If not, mount to $DESTINATION_DIR
   echo "---------- Device not mounted. Mounting $DEVICE ----------" >> $LOG_FILE
   eval mount "$DEVICE" "$DESTINATION_DIR" "$NULL_DEVICE"
 else
-  # If yes, grep the mount point
+  # If yes, grep the mount point and change the $DESTINATION_DIR
   DESTINATION_DIR=$(grep "$DEVICE" "$MOUNT_FILE" | cut -d " " -f 2)
 fi
 
@@ -32,11 +70,14 @@ fi
   echo "---------- Do not have write permissions ----------" >> $LOG_FILE
   exit 1
 }
+# ------------------------------------------------------------------------ #
+
 # -------------------------------FUNCTIONS----------------------------------------- #
 backup () {
+  # Find the files with "find" command and copy only the differences (-u parameter from "cp" command)
   find "$BACKUP_DIR" -name "*.mp3" \
                      -exec cp -vru {} "$DESTINATION_DIR""$DESTINATION_DIR_MUSICS" \; 1>> $LOG_FILE 2>&1
-
+  # Worked fine? Umount.
   [ "$?" = "0" ] && {
     echo "---------- Back-up finished. Umounting $DEVICE ----------" >> $LOG_FILE
     eval umount "$DEVICE" "$NULL_DEVICE"
@@ -45,6 +86,7 @@ backup () {
 }
 
 preparelogfile () {
+  # Insert a simple header to the log file with the timestamp
   echo "----------[ $(date) ]----------" >> $LOG_FILE
 }
 
@@ -52,5 +94,8 @@ main () {
   preparelogfile
   backup
 }
+# ------------------------------------------------------------------------ #
+
 # -------------------------------EXECUTION----------------------------------------- #
 main
+# ------------------------------------------------------------------------ #
